@@ -19,5 +19,5 @@ run:
 	./hw4 url.txt
 
 tarball:
-	tar -cvzf <your last name>.tar.gz *
+	tar -cvzf starr.tar.gz hw4.c web.c
 

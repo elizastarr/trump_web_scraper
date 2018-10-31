@@ -31,7 +31,7 @@ int read_url_file( char* file_path, web_t* web_array );
 int write_url_file( char* file_path, web_t* web_array, int num_urls );
 
 // ---------------------------------------------
-// Function prototypes that is ran by a thread
+// Function prototypes that is run by a thread
 void th_run( int* i );
 
 int main( int argc, char *argv[] ) {
@@ -41,6 +41,18 @@ int main( int argc, char *argv[] ) {
 
 	// malloc web_t array with 100 elements
 	web_array = malloc( sizeof( web_t )*100 );
+	/*
+	// web_t array contains
+	char* url; 	// string that has the url 
+	char* webpage; // string that has the html web page
+	int link_cnt;	// integer that represents the total number of href link counts
+	char** links; 	// array that stores a string for each href that contains the word "trump"
+
+	each webpage gets its own url, webpage, link_cnt, and links spaces
+	*/
+
+	pthread_mutex_t lock; 
+
 
 	// -------------------------------------------------
 	// Verify the correct number of arguments are provided
@@ -68,9 +80,9 @@ int main( int argc, char *argv[] ) {
 		for ( i=0; i<num_urls; i++ ) {
 
 			if ( DEBUG ) {
-				printf("URL=%s\n", web_array[i].url ); 
-				printf("CNT=%d\n", web_array[i].link_cnt );
-				printf("WEBPAGE=%s\n", web_array[i].webpage );
+				//printf("URL=%s\n", web_array[i].url ); 
+				//printf("CNT=%d\n", web_array[i].link_cnt );
+				//printf("WEBPAGE=%s\n", web_array[i].webpage );
 			}
 	
 			index[i] = i;
@@ -82,12 +94,12 @@ int main( int argc, char *argv[] ) {
 			//
 			// If one thread cannot be created (i.e. an error occurs) you may exit
 			// the entire program.
-
 			
+			int retVal = pthread_create(&(thread_array[i]), NULL, &th_run, &index[i]);
+			if (retVal != 0){
+				exit(retVal);
+			}
 
-
-
-			
 		}
 
 		// -------------------------------------------------------------
@@ -95,16 +107,21 @@ int main( int argc, char *argv[] ) {
 		//
 		// If one thread cannot be joined (i.e. an error occurs) you may exit
 		// the entire program.
-
-		
+		for ( i=0; i<num_urls; i++ ) {
+			
+			int retVal = pthread_join(thread_array[i], NULL); 
+			if (retVal != 0){
+				exit(retVal);
+			}
+		}
 
 		// -------------------------------------------------------------
 		// STEP 3: write results to output file 
 		// Note: please do not change this file name (used for testing purposes)
 		// output file name = "make_merica_great_again.txt"
-		
-		
-		
+
+		char* file_path = "make_merica_great_again.txt";
+		write_url_file( file_path, web_array, num_urls );
 
 	} else {
 
@@ -114,8 +131,9 @@ int main( int argc, char *argv[] ) {
 	}
 
 	return OK;
-     
+   
 } // end main function
+
 
 // ------------------------------------
 // Function ran by an individual thread
@@ -172,8 +190,21 @@ int write_url_file( char* file_path, web_t* web_array, int num_urls ) {
 	//	.
 	//      .
 	//
-
 	
+	FILE *f = fopen(file_path, "w");
+	if (f == NULL)
+	{
+		printf("Error opening file.\n");
+		exit(1);
+	}
+
+	for ( int i=0; i<num_urls; i++ ) {
+		for(int j=0; j<web_array[i].link_cnt; j++){
+			fprintf(f, "%s, %s\n", web_array[i].url , web_array[i].links[j] );
+		}
+	}
+
+	fclose(f);
 
 	return OK;
 

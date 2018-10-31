@@ -1,4 +1,3 @@
-
 // -----------------------------------
 // CSCI 340 - Operating Systems
 // Fall 2018
@@ -15,6 +14,8 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "web.h"
+
+#define _GNU_SOURCE
 
 // global variable used by the write_callback function
 size_t length = 0;
@@ -126,10 +127,54 @@ void parse( web_t* web_struct ) {
 	//
 	// Note: you will need to malloc the links array
 
+	
+	char* p_href = web_struct[0].webpage; // pointer to webpage to search for hrefs
+	char temp_href[7];
+	char* p_trump; // pointer to link to search for trump
+	char temp_trump[6];
+
+	char hrefStr[] = "href=\""; 
+    char trumpStr[] = "trump";
+
+	
+
+	pthread_mutex_t lock;
+
+	web_struct[0].links = malloc(sizeof(char*)*1024);
+	for ( int i=0; i<1024; i++ ) web_struct[0].links[i] = malloc(sizeof(char)*4000);
+	
+    while( *(p_href + 7) != '\0') { // SEARCH "href"
+		
+		strncpy(temp_href, p_href, 6);  
+		
+		if(strstr(temp_href, hrefStr) != NULL){ // FOUND href
+			//char link_content[4000];
+			char* link_content = malloc(2000);
+			char* link_start;
+			char* link_end;
+			int link_len;
+
+			link_start = p_href + 6; //offset by 6 for href="
+			link_end = strstr( link_start, "\"" );
+			link_len = link_end - link_start;
+
+			strncpy(link_content, link_start, link_len);
+			
+			if(strcasestr(link_content, trumpStr) != NULL){ // SEARCH "trump"
+				//printf("%s\n\n", link_content);
+				web_struct->links[web_struct->link_cnt] = link_content;
+				web_struct->link_cnt = 1 + web_struct->link_cnt;
+			}
+
+		}		
+
+		p_href++;
+    }
+
 	if ( WEB_DEBUG ) {
-		printf("URL=%s\n", web_struct->url ); 
-		printf("CNT=%d\n", web_struct->link_cnt );
-		printf("WEBPAGE=%s\n", web_struct->webpage );
+		//printf("WeeURL=%s\n", web_struct->url ); 
+		//printf("CNT=%d\n", web_struct->link_cnt );
+		//printf("WEBPAGE=%s\n", web_struct->webpage );
 	}
 
 } // end parse function
